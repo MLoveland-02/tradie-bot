@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { storeSession, getStoredAuth } from '../lib/api'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -105,6 +106,13 @@ export default function LoginPage() {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Don&apos;t have an account?{' '}
+          <Link href="/signup" className="text-orange-500 hover:text-orange-400 font-medium transition-colors">
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
   )
