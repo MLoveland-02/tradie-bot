@@ -190,11 +190,44 @@ function isGoodbye(text) {
 }
 
 /**
- * Format up to 3 slots as natural spoken English.
- * e.g. "Monday the 14th at 9 AM, 10 AM, or Tuesday the 15th at 9 AM"
+ * Returns the ordinal suffix for a day number (1 → "1st", 11 → "11th", etc.)
+ */
+function ordinal(n) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  // 11, 12, 13 are always "th"; otherwise use last digit
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+/**
+ * Format a single slot as natural spoken English.
+ * e.g. new Date("2025-04-14T09:00") → "Monday the 14th of April at 9am"
+ *      new Date("2025-04-14T14:30") → "Monday the 14th of April at 2:30pm"
+ */
+function formatSlotForVoice(slot) {
+  const d = new Date(slot);
+
+  const weekday = d.toLocaleDateString("en-GB", { weekday: "long" });
+  const month   = d.toLocaleDateString("en-GB", { month: "long" });
+  const day     = ordinal(d.getDate());
+
+  const hours   = d.getHours();
+  const minutes = d.getMinutes();
+  const period  = hours < 12 ? "am" : "pm";
+  const h       = hours % 12 || 12; // convert 0 → 12 for midnight
+  const timeStr = minutes === 0
+    ? `${h}${period}`
+    : `${h}:${String(minutes).padStart(2, "0")}${period}`;
+
+  return `${weekday} the ${day} of ${month} at ${timeStr}`;
+}
+
+/**
+ * Format a list of up to 3 slots as a natural spoken list.
+ * e.g. "Monday the 14th of April at 9am, 10am, or Tuesday the 15th of April at 9am"
  */
 function formatSlotsForVoice(slots) {
-  const formatted = slots.map((s) => formatSlot(s));
+  const formatted = slots.map((s) => formatSlotForVoice(s));
   if (formatted.length === 1) return formatted[0];
   if (formatted.length === 2) return `${formatted[0]} or ${formatted[1]}`;
   return `${formatted.slice(0, -1).join(", ")}, or ${formatted[formatted.length - 1]}`;
@@ -588,7 +621,7 @@ async function processVoiceTurn(callSid, recordingUrl) {
         last_outbound_at: new Date().toISOString(),
       });
 
-      reply = `Your appointment has been booked for ${formatSlot(pendingBooking.iso)} — we look forward to seeing you.`;
+      reply = `Your appointment has been booked for ${formatSlotForVoice(pendingBooking.iso)} — we look forward to seeing you.`;
 
     } catch (err) {
       console.error("VOICE BOOKING CONFIRM ERROR:", err);
@@ -628,7 +661,7 @@ async function processVoiceTurn(callSid, recordingUrl) {
             "system",
             `PENDING_BOOKING|${new Date(resolvedSlot).toISOString()}|${summary}`
           );
-          reply = `Just to confirm — ${formatSlot(resolvedSlot)}. Say yes to book that or no to choose a different time.`;
+          reply = `Just to confirm — ${formatSlotForVoice(resolvedSlot)}. Say yes to book that or no to choose a different time.`;
         }
 
       } else {
