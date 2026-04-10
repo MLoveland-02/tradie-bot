@@ -463,10 +463,31 @@ async function processVoiceTurn(callSid, recordingUrl) {
 
   // ── 1. Transcribe with Whisper ──────────────────────────────────────────
   const transcript = await transcribeRecording(recordingUrl);
-  console.log(`[voice] ${callSid} — transcript: "${transcript}"`);
 
-  // ── 2. Empty or too-short transcript → re-prompt ───────────────────────
-  if (!transcript || transcript.length < 3) {
+  // Log raw Whisper output before any filtering so we can see exactly what
+  // it returns — useful for diagnosing hallucinations in production
+  console.log(`[voice] ${callSid} — raw transcript: "${transcript}"`);
+
+  // ── 2. Hallucination filter + transcript validation → re-prompt ─────────
+  // Whisper commonly hallucinates short filler phrases when there is silence
+  // or background noise.  Treat any of these as empty audio and re-prompt.
+  const WHISPER_HALLUCINATIONS = new Set([
+    "you're welcome", "youre welcome",
+    "thank you", "thanks",
+    "bye", "goodbye",
+    "see you",
+    "have a great day",
+    "no problem",
+    "sure",
+  ]);
+
+  const transcriptNormalised = transcript.trim().toLowerCase().replace(/[.!?,]+$/, "");
+  const isHallucination      = WHISPER_HALLUCINATIONS.has(transcriptNormalised);
+  const isPunctuation        = /^[\s\p{P}]+$/u.test(transcript); // only whitespace / punctuation
+  const isTooShort           = transcript.trim().length < 5;
+
+  if (!transcript || isTooShort || isPunctuation || isHallucination) {
+    console.log(`[voice] ${callSid} — transcript rejected (hallucination=${isHallucination}, tooShort=${isTooShort}, punctuation=${isPunctuation})`);
     const reprompt = "Sorry, I didn't catch that — could you say that again?";
     await deliverVoiceReply(callSid, reprompt, voice, { loop: true });
     return;
