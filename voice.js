@@ -239,8 +239,8 @@ function buildRecordTwiml(audioId, options = {}) {
   twiml.record({
     action:  `${process.env.APP_BASE_URL}/voice/recording`,
     method:  "POST",
-    maxLength: 30,        // maximum seconds per turn
-    timeout:   3,         // seconds of silence that end the recording
+    maxLength: 20,        // maximum seconds per turn
+    timeout:   1,         // seconds of silence that end the recording
     playBeep:  false,     // no beep — sounds more like a real conversation
     trim:      "trim-silence", // strip leading/trailing silence before Whisper
   });
@@ -465,9 +465,9 @@ async function processVoiceTurn(callSid, recordingUrl) {
   const transcript = await transcribeRecording(recordingUrl);
   console.log(`[voice] ${callSid} — transcript: "${transcript}"`);
 
-  // ── 2. Empty transcript → re-prompt ────────────────────────────────────
-  if (!transcript) {
-    const reprompt = "Sorry, I didn't quite get that — could you say it again?";
+  // ── 2. Empty or too-short transcript → re-prompt ───────────────────────
+  if (!transcript || transcript.length < 3) {
+    const reprompt = "Sorry, I didn't catch that — could you say that again?";
     await deliverVoiceReply(callSid, reprompt, voice, { loop: true });
     return;
   }
@@ -715,8 +715,8 @@ async function deliverVoiceReply(callSid, text, voice, { loop }) {
     nextTwiml.record({
       action:    `${process.env.APP_BASE_URL}/voice/recording`,
       method:    "POST",
-      maxLength: 30,
-      timeout:   3,
+      maxLength: 20,
+      timeout:   1,
       playBeep:  false,
       trim:      "trim-silence",
     });
