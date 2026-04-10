@@ -26,6 +26,7 @@ const EMPTY = {
   booking_start_hour: 9,
   booking_end_hour: 17,
   booking_buffer_minutes: 15,
+  voice_preference: 'nova',
 }
 
 export default function SettingsPage() {
@@ -61,6 +62,7 @@ export default function SettingsPage() {
           booking_start_hour:     profile.booking_start_hour     ?? 9,
           booking_end_hour:       profile.booking_end_hour       ?? 17,
           booking_buffer_minutes: profile.booking_buffer_minutes ?? 15,
+          voice_preference:       profile.voice_preference       ?? 'nova',
         })
         setProfileLoaded(true)
       })
@@ -179,6 +181,16 @@ export default function SettingsPage() {
               <option value="Friendly">Friendly</option>
               <option value="Casual">Casual</option>
             </select>
+          </div>
+          <div>
+            <label className={labelCls}>AI call voice</label>
+            <select className={inputCls} value={fields.voice_preference} onChange={(e) => set('voice_preference', e.target.value)}>
+              <option value="nova">Nova — warm &amp; natural (default)</option>
+              <option value="alloy">Alloy — neutral &amp; balanced</option>
+              <option value="echo">Echo — deep &amp; authoritative</option>
+              <option value="shimmer">Shimmer — clear &amp; expressive</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1.5">Voice used when the AI answers phone calls</p>
           </div>
         </Section>
 

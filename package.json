@@ -18,8 +18,7 @@
     "express": "^5.2.1",
     "googleapis": "^171.4.0",
     "openai": "^6.25.0",
-    "sqlite3": "^5.1.7",
-    "twilio": "^5.12.2",
+"twilio": "^5.12.2",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
