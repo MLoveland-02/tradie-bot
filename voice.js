@@ -240,7 +240,7 @@ function buildRecordTwiml(audioId, options = {}) {
     action:  `${process.env.APP_BASE_URL}/voice/recording`,
     method:  "POST",
     maxLength: 20,        // maximum seconds per turn
-    timeout:   1,         // seconds of silence that end the recording
+    timeout:   2,         // seconds of silence that end the recording
     playBeep:  false,     // no beep — sounds more like a real conversation
     trim:      "trim-silence", // strip leading/trailing silence before Whisper
   });
@@ -716,7 +716,7 @@ async function deliverVoiceReply(callSid, text, voice, { loop }) {
       action:    `${process.env.APP_BASE_URL}/voice/recording`,
       method:    "POST",
       maxLength: 20,
-      timeout:   1,
+      timeout:   2,
       playBeep:  false,
       trim:      "trim-silence",
     });
