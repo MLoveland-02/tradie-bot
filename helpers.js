@@ -102,7 +102,9 @@ function detectBookingIntent(text) {
 function isConfirmation(text) {
   return [
     "yes", "y", "confirm", "confirmed",
-    "yeah", "yep", "yup", "sure", "correct", "that's right", "thats right",
+    "yeah", "yep", "yup", "sure", "ok", "okay",
+    "correct", "that's right", "thats right",
+    "go ahead", "sounds good", "perfect", "that works",
   ].includes(normalize(text));
 }
 
@@ -194,9 +196,16 @@ function extractPreferredTime(text) {
   return null;
 }
 
+// Day-name → getDay() index map for spoken day matching ("saturday" → 6)
+const DAY_NAMES = {
+  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+  thursday: 4, friday: 5, saturday: 6,
+};
+
 function resolveSlotFromReply(incoming, offeredSlots) {
   const incomingNormalized = normalize(incoming);
 
+  // ── Pass 1: exact string match against full or short formatted slot ───────
   for (const iso of offeredSlots) {
     const full = normalize(formatSlot(iso));
     const short = normalize(
@@ -211,16 +220,24 @@ function resolveSlotFromReply(incoming, offeredSlots) {
     }
   }
 
+  // ── Pass 2: fuzzy match on hour (+ optional day of week) ─────────────────
+  // Handles callers saying "10am", "Saturday at 10", "Saturday 10am", etc.
   const preferredTime = extractPreferredTime(incoming);
   if (!preferredTime) return null;
+
+  // Check whether the caller also named a day of week
+  const mentionedDay = Object.keys(DAY_NAMES).find((name) =>
+    incomingNormalized.includes(name)
+  );
+  const preferredDow = mentionedDay != null ? DAY_NAMES[mentionedDay] : null;
 
   return (
     offeredSlots.find((iso) => {
       const d = new Date(iso);
-      return (
-        d.getHours() === preferredTime.hour &&
-        d.getMinutes() === preferredTime.minute
-      );
+      const hourMatch   = d.getHours()   === preferredTime.hour;
+      const minuteMatch = d.getMinutes() === preferredTime.minute;
+      const dowMatch    = preferredDow == null || d.getDay() === preferredDow;
+      return hourMatch && minuteMatch && dowMatch;
     }) || null
   );
 }

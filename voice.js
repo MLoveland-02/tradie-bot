@@ -512,6 +512,9 @@ async function processVoiceTurn(callSid, recordingUrl) {
     "have a great day",
     "no problem",
     "sure",
+    "thanks for watching", "thanks for watching!",
+    "please subscribe",
+    "like and subscribe",
   ]);
 
   const transcriptNormalised = transcript.trim().toLowerCase().replace(/[.!?,]+$/, "");
